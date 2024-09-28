@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "airflow-practice"
+version = "0.1.0"
+description = ""
+authors = ["Yunhong Min <yunhongmin00@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.10"
+apache-airflow = "^2.10.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
