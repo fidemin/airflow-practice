@@ -2,6 +2,7 @@ from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
 from airflow.providers.postgres.operators.postgres import PostgresOperator
+from airflow.utils.task_group import TaskGroup
 
 
 def _print_context(**context):
@@ -46,29 +47,30 @@ with DAG(
         dag=dag,
     )
 
-    download_data = BashOperator(
-        task_id="download_data",
-        bash_command=(
-            "curl -o /tmp/wikipedia_views_{{ ds_nodash }}{{ '{:02d}'.format(execution_date.hour) }}0000.gz "
-            "https://dumps.wikimedia.org/other/pageviews/"
-            "{{ execution_date.year }}/{{ execution_date.year }}"
-            "-{{ '{:02d}'.format(execution_date.month) }}"
-            "/pageviews-{{ execution_date.year }}"
-            "{{ '{:02d}'.format(execution_date.month) }}"
-            "{{ '{:02d}'.format(execution_date.day) }}"
-            "-{{ '{:02d}'.format(execution_date.hour) }}0000.gz"
-        ),
-        dag=dag,
-    )
+    with TaskGroup("download_extract"):
+        download_data = BashOperator(
+            task_id="download_data",
+            bash_command=(
+                "curl -o /tmp/wikipedia_views_{{ ds_nodash }}{{ '{:02d}'.format(execution_date.hour) }}0000.gz "
+                "https://dumps.wikimedia.org/other/pageviews/"
+                "{{ execution_date.year }}/{{ execution_date.year }}"
+                "-{{ '{:02d}'.format(execution_date.month) }}"
+                "/pageviews-{{ execution_date.year }}"
+                "{{ '{:02d}'.format(execution_date.month) }}"
+                "{{ '{:02d}'.format(execution_date.day) }}"
+                "-{{ '{:02d}'.format(execution_date.hour) }}0000.gz"
+            ),
+            dag=dag,
+        )
 
-    extract_data = BashOperator(
-        task_id="extract_data",
-        bash_command=(
-            "gzip -qd -c /tmp/wikipedia_views_{{ ds_nodash }}{{ '{:02d}'.format(execution_date.hour) }}0000.gz "
-            "> /tmp/wikipedia_views_{{ ds_nodash }}{{ '{:02d}'.format(execution_date.hour) }}0000"
-        ),
-        dag=dag,
-    )
+        extract_data = BashOperator(
+            task_id="extract_data",
+            bash_command=(
+                "gzip -qd -c /tmp/wikipedia_views_{{ ds_nodash }}{{ '{:02d}'.format(execution_date.hour) }}0000.gz "
+                "> /tmp/wikipedia_views_{{ ds_nodash }}{{ '{:02d}'.format(execution_date.hour) }}0000"
+            ),
+            dag=dag,
+        )
 
     fetch_page_views = PythonOperator(
         task_id="fetch_most_page_views",
