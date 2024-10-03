@@ -6,8 +6,7 @@ from airflow.providers.postgres.operators.postgres import PostgresOperator
 dag = DAG(
     "save_most_wikipedia_views_temp1",
     template_searchpath="/tmp",
-    # start_date=airflow.utils.dates.days_ago(3),
-    # schedule_interval="@hourly",
+    schedule_interval=None,
 )
 
 
